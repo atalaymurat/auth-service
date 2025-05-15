@@ -11,13 +11,24 @@ connectDB(); // Call the function to establish the connection
 const authRoutes = require("./routes/auth");
 
 const app = express();
-const PORT = process.env.PORT || 4000
+const PORT = process.env.PORT || 4000;
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://postiva-atalaymurats-projects.vercel.app",
+];
 
-// Middleware
-app.use(cors({
-  origin:  "*", // geçici olarak "*" olabilir, prod'da kısıtla
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 // Routes
