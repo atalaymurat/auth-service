@@ -14,7 +14,7 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://postiva-atalaymurats-projects.vercel.app",
+  process.env.FRONTEND_URL,
 ];
 
 app.use(
