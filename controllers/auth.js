@@ -30,8 +30,8 @@ const login = async (req, res) => {
     };
 
     const user = await User.findOrCreate(userData);
+    console.log("User found or created:", user);
     const token = createToken(user);
-    console.log("User found or created:", token);
 
     return res.status(200).json({
       success: true,
@@ -61,14 +61,12 @@ const verify = async (req, res) => {
     }
 
     const decoded = verifyToken(token);
-    console.log("Decoded token:", decoded);
+    console.log("Decoded token From Verify Auth:", decoded);
 
     const user = await User.findOne({
       _id: decoded._id,
       applicationId: applicationId,
-    }).select(
-      "_id email name profilePicture roles isActive createdAt preferences firebaseUid emailVerified"
-    );
+    });
 
     if (!user || !user.isActive) {
       return res.status(404).json({ error: "User not found or inactive" });
