@@ -1,8 +1,5 @@
-const {
-  verifyFirebaseToken,
-  createToken,
-  verifyToken,
-} = require("shared-auth");
+const verifyFirebaseToken = require("../utils/verifyFirebaseToken");
+const { createToken, verifyToken } = require("../utils/jwt");
 const User = require("../models/User");
 
 const login = async (req, res) => {
