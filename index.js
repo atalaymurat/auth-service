@@ -3,6 +3,7 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 const connectDB = require("./config/db"); // Import the connectDB function
+const logger = require('./utils/logger');
 
 dotenv.config();
 // --- Connect to Database ---
@@ -36,5 +37,5 @@ app.use("/api/auth", authRoutes);
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  logger.info(`Server running on port ${PORT}`);
 });

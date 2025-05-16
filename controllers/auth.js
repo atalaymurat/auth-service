@@ -1,6 +1,7 @@
 const verifyFirebaseToken = require("../utils/verifyFirebaseToken");
 const { createToken, verifyToken } = require("../utils/jwt");
 const User = require("../models/User");
+const logger = require('../utils/logger');
 
 const login = async (req, res) => {
   try {
@@ -27,7 +28,7 @@ const login = async (req, res) => {
     };
 
     const user = await User.findOrCreate(userData);
-    console.log("User found or created:", user);
+    logger.info("User found or created:", user);
     const token = createToken(user);
 
     return res.status(200).json({
@@ -58,7 +59,7 @@ const verify = async (req, res) => {
     }
 
     const decoded = verifyToken(token);
-    console.log("Decoded token From Verify Auth:", decoded);
+    logger.info("Decoded token From Verify Auth:", decoded);
 
     const user = await User.findOne({
       _id: decoded._id,
@@ -71,12 +72,13 @@ const verify = async (req, res) => {
 
     return res.status(200).json({ success: true, user });
   } catch (err) {
-    console.error("Verify error:", err.message);
+    logger.error("Verify error:", err.message);
     return res.status(401).json({ error: "Invalid or expired token" });
   }
 };
 
 const healthCheck = (_req, res) => {
+  logger.info("Health check endpoint hit");
   return res.status(200).json({ status: "ok", service: "auth-service" });
 };
 
