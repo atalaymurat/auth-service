@@ -31,9 +31,17 @@ const login = async (req, res) => {
     logger.info("User found or created:", user);
     const token = createToken(user);
 
+    const isProduction = process.env.NODE_ENV === "production";
+    res.cookie("accessToken", token, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+      domain: isProduction ? ".postiva.uk" : undefined,
+      maxAge: 24 * 60 * 60 * 1000, // 1 gün
+    });
+
     return res.status(200).json({
       success: true,
-      accessToken: token,
       user,
     });
   } catch (error) {
@@ -43,6 +51,13 @@ const login = async (req, res) => {
 };
 
 const logout = async (_req, res) => {
+  const isProduction = process.env.NODE_ENV === "production";
+  res.clearCookie("accessToken", {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    domain: isProduction ? ".postiva.uk" : undefined,
+  });
   return res.status(200).json({
     success: true,
     message: "Logout successful",
@@ -51,7 +66,8 @@ const logout = async (_req, res) => {
 
 const verify = async (req, res) => {
   try {
-    const { token, applicationId } = req.body;
+    const token = req.cookies?.accessToken;
+    const { applicationId } = req.body;
     if (!token || !applicationId) {
       return res
         .status(400)

@@ -33,4 +33,5 @@ tmp/
 # Docker
 *.pid
 *.seed
-docker-compose.override.ymlnode_modules/
+docker-compose.override.yml
+node_modules/

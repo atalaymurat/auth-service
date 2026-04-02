@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 const connectDB = require("./config/db"); // Import the connectDB function
@@ -12,9 +13,9 @@ connectDB(); // Call the function to establish the connection
 const authRoutes = require("./routes/auth");
 
 const app = express();
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 3022;
 const allowedOrigins = [
-  "http://localhost:3000",
+  "http://192.168.1.100:3020",
   process.env.FRONTEND_URL,
 ];
 
@@ -30,6 +31,7 @@ app.use(
     credentials: true,
   })
 );
+app.use(cookieParser());
 app.use(express.json());
 
 // Routes
