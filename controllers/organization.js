@@ -35,8 +35,19 @@ const createOrg = async (req, res) => {
 // GET /api/org/me
 const getMyOrg = async (req, res) => {
   try {
-    const org = await Organization.findById(req.user.orgId);
+    const org = await Organization.findById(req.user.orgId).lean();
     if (!org) return res.status(404).json({ message: "Organizasyon bulunamadı." });
+
+    const userIds = org.members.map((m) => m.userId);
+    const users = await User.find({ _id: { $in: userIds } }).select("_id name email").lean();
+    const userMap = Object.fromEntries(users.map((u) => [u._id.toString(), u]));
+
+    org.members = org.members.map((m) => ({
+      ...m,
+      name: userMap[m.userId.toString()]?.name || "",
+      email: userMap[m.userId.toString()]?.email || "",
+    }));
+
     res.json(org);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -94,4 +105,31 @@ const updateMemberRole = async (req, res) => {
   }
 };
 
-module.exports = { createOrg, getMyOrg, inviteMember, updateMemberRole };
+// PATCH /api/org/update
+const updateOrg = async (req, res) => {
+  try {
+    const { name, logo, phone, email, address, website, taxNo } = req.body;
+    const org = await Organization.findById(req.user.orgId);
+    if (!org) return res.status(404).json({ message: "Organizasyon bulunamadı." });
+
+    const callerRole = org.members.find(m => m.userId.toString() === req.user._id.toString())?.role;
+    if (callerRole !== "owner" && callerRole !== "admin") {
+      return res.status(403).json({ message: "Yetersiz yetki." });
+    }
+
+    if (name) org.name = name;
+    if (logo !== undefined) org.logo = logo;
+    if (phone !== undefined) org.phone = phone;
+    if (email !== undefined) org.email = email;
+    if (address !== undefined) org.address = address;
+    if (website !== undefined) org.website = website;
+    if (taxNo !== undefined) org.taxNo = taxNo;
+
+    await org.save();
+    res.json({ message: "Güncellendi.", org });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+module.exports = { createOrg, getMyOrg, inviteMember, updateMemberRole, updateOrg };

@@ -20,6 +20,12 @@ const organizationSchema = new mongoose.Schema(
     applicationId: { type: String, required: true },
     members: [memberSchema],
     createdBy: { type: mongoose.Schema.Types.ObjectId, required: true },
+    logo: String,
+    phone: String,
+    email: String,
+    address: String,
+    website: String,
+    taxNo: String,
   },
   { timestamps: true }
 );
