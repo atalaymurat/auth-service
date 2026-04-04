@@ -16,6 +16,8 @@ const app = express();
 const PORT = process.env.PORT || 3022;
 const allowedOrigins = [
   "http://192.168.1.100:3020",
+  "http://localhost",
+  "http://localhost:3020",
   process.env.FRONTEND_URL,
 ];
 
