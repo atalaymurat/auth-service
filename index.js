@@ -11,6 +11,7 @@ dotenv.config();
 connectDB(); // Call the function to establish the connection
 
 const authRoutes = require("./routes/auth");
+const orgRoutes = require("./routes/organization");
 
 const app = express();
 const PORT = process.env.PORT || 3022;
@@ -38,6 +39,7 @@ app.use(express.json());
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/org", orgRoutes);
 
 // Start server
 app.listen(PORT, () => {

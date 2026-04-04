@@ -11,9 +11,11 @@ const userSchema = new mongoose.Schema(
     authProvider: { type: String, required: true },
     roles: {
       type: [String],
-      enum: ["user", "admin", "editor", "premium"],
+      enum: ["user", "admin", "editor", "premium", "superadmin"],
       default: ["user"],
     },
+    orgId: { type: mongoose.Schema.Types.ObjectId, ref: "Organization" },
+    orgRole: { type: String, enum: ["owner", "admin", "member"], default: null },
     isActive: {
       type: Boolean,
       default: true,

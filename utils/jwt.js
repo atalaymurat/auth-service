@@ -8,6 +8,8 @@ const createToken = (user) => {
       email: user.email,
       roles: user.roles,
       applicationId: user.applicationId,
+      orgId: user.orgId || null,
+      orgRole: user.orgRole || null,
     },
     process.env.JWT_SECRET,
     { expiresIn: "1d" }
