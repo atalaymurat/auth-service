@@ -54,11 +54,12 @@ userSchema.statics.findOrCreate = async function (userData) {
         profilePicture: userData.profilePicture,
         emailVerified: userData.emailVerified || false,
         authProvider: userData.authProvider || "password",
-        applicationId: userData.applicationId, // 🔐 burada mutlaka olmalı
+        applicationId: userData.applicationId,
       });
+      return { user, isNew: true };
     }
 
-    return user;
+    return { user, isNew: false };
   } catch (error) {
     console.error("User.findOrCreate error:", error);
     throw error;

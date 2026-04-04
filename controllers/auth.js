@@ -1,6 +1,7 @@
 const verifyFirebaseToken = require("../utils/verifyFirebaseToken");
 const { createToken, verifyToken } = require("../utils/jwt");
 const User = require("../models/User");
+const Organization = require("../models/Organization");
 const logger = require('../utils/logger');
 
 const login = async (req, res) => {
@@ -27,8 +28,37 @@ const login = async (req, res) => {
       applicationId,
     };
 
-    const user = await User.findOrCreate(userData);
+    const { user, isNew } = await User.findOrCreate(userData);
     logger.info("User found or created:", user);
+
+    // Org yoksa oluştur (yeni kullanıcı veya daha önce org oluşturulamadıysa)
+    if (!user.orgId) {
+      const baseSlug = user.email.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+      const slug = `${baseSlug}-${user._id.toString().slice(-6)}`;
+
+      try {
+        const org = await Organization.create({
+          name: user.name,
+          slug,
+          applicationId: user.applicationId,
+          createdBy: user._id,
+          members: [{ userId: user._id, role: "owner" }],
+        });
+
+        const updated = await User.findByIdAndUpdate(
+          user._id,
+          { orgId: org._id, orgRole: "owner" },
+          { new: true }
+        );
+        user.orgId = updated.orgId;
+        user.orgRole = updated.orgRole;
+        logger.info(`Organization created for user ${user._id}:`, org._id);
+      } catch (orgErr) {
+        logger.error("Organization creation failed:", orgErr.message);
+        return res.status(500).json({ error: "Organizasyon oluşturulamadı. Lütfen tekrar deneyin." });
+      }
+    }
+
     const token = createToken(user);
 
     const isProduction = process.env.NODE_ENV === "production";
