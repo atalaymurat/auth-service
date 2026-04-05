@@ -1,5 +1,5 @@
 const verifyFirebaseToken = require("../utils/verifyFirebaseToken");
-const { createToken, verifyToken } = require("../utils/jwt");
+const { createToken, createRefreshToken, verifyToken } = require("../utils/jwt");
 const User = require("../models/User");
 const Organization = require("../models/Organization");
 const logger = require('../utils/logger');
@@ -59,16 +59,19 @@ const login = async (req, res) => {
       }
     }
 
-    const token = createToken(user);
+    const accessToken = createToken(user);
+    const refreshToken = createRefreshToken(user);
 
     const isProduction = process.env.NODE_ENV === "production";
-    res.cookie("accessToken", token, {
+    const cookieBase = {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? "none" : "lax",
       domain: isProduction ? ".postiva.uk" : undefined,
-      maxAge: 24 * 60 * 60 * 1000, // 1 gün
-    });
+    };
+
+    res.cookie("accessToken", accessToken, { ...cookieBase, maxAge: 15 * 60 * 1000 });
+    res.cookie("refreshToken", refreshToken, { ...cookieBase, maxAge: 30 * 24 * 60 * 60 * 1000 });
 
     return res.status(200).json({
       success: true,
@@ -82,16 +85,40 @@ const login = async (req, res) => {
 
 const logout = async (_req, res) => {
   const isProduction = process.env.NODE_ENV === "production";
-  res.clearCookie("accessToken", {
+  const cookieBase = {
     httpOnly: true,
     secure: isProduction,
     sameSite: isProduction ? "none" : "lax",
     domain: isProduction ? ".postiva.uk" : undefined,
-  });
-  return res.status(200).json({
-    success: true,
-    message: "Logout successful",
-  });
+  };
+  res.clearCookie("accessToken", cookieBase);
+  res.clearCookie("refreshToken", cookieBase);
+  return res.status(200).json({ success: true, message: "Logout successful" });
+};
+
+const refresh = async (req, res) => {
+  try {
+    const token = req.cookies?.refreshToken;
+    if (!token) return res.status(401).json({ error: "No refresh token" });
+
+    const decoded = verifyToken(token);
+    const user = await User.findById(decoded._id);
+    if (!user || !user.isActive) return res.status(401).json({ error: "User not found" });
+
+    const accessToken = createToken(user);
+    const isProduction = process.env.NODE_ENV === "production";
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+      domain: isProduction ? ".postiva.uk" : undefined,
+      maxAge: 15 * 60 * 1000,
+    });
+
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    return res.status(401).json({ error: "Invalid or expired refresh token" });
+  }
 };
 
 const verify = async (req, res) => {
@@ -128,4 +155,4 @@ const healthCheck = (_req, res) => {
   return res.status(200).json({ status: "ok", service: "auth-service" });
 };
 
-module.exports = { login, logout, verify, healthCheck };
+module.exports = { login, logout, verify, refresh, healthCheck };

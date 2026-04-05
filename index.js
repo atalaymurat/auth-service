@@ -2,24 +2,25 @@ const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const dotenv = require("dotenv");
-const mongoose = require("mongoose");
-const connectDB = require("./config/db"); // Import the connectDB function
+const rateLimit = require("express-rate-limit");
+const connectDB = require("./config/db");
 const logger = require('./utils/logger');
+const internalAuth = require("./middleware/internalAuth");
 
 dotenv.config();
-// --- Connect to Database ---
-connectDB(); // Call the function to establish the connection
+connectDB();
 
 const authRoutes = require("./routes/auth");
 const orgRoutes = require("./routes/organization");
 
 const app = express();
 const PORT = process.env.PORT || 3022;
+
+// CORS: sadece backend'e izin ver
 const allowedOrigins = [
-  "http://192.168.1.100:3020",
-  "http://localhost",
-  "http://localhost:3020",
-  process.env.FRONTEND_URL,
+  process.env.BACKEND_URL,
+  "http://localhost:3021",
+  "http://192.168.1.100:3021",
 ];
 
 app.use(
@@ -37,11 +38,23 @@ app.use(
 app.use(cookieParser());
 app.use(express.json());
 
+// Tüm route'lara internal API key kontrolü
+app.use(internalAuth);
+
+// Login rate limit: 1 IP'den 10 dakikada max 10 istek
+const loginLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: "Çok fazla giriş denemesi. 10 dakika sonra tekrar deneyin." },
+});
+app.use("/api/auth/login", loginLimiter);
+
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/org", orgRoutes);
 
-// Start server
 app.listen(PORT, () => {
-  logger.info(`Server running on port ${PORT}`);
+  logger.info(`Auth service running on port ${PORT}`);
 });

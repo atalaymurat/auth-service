@@ -1,32 +1,20 @@
 const jwt = require("jsonwebtoken");
 
-const createToken = (user) => {
-  console.log("USER TO CREATE TOKEN", user);
-  return jwt.sign(
-    {
-      _id: user._id,
-      email: user.email,
-      roles: user.roles,
-      applicationId: user.applicationId,
-      orgId: user.orgId || null,
-      orgRole: user.orgRole || null,
-    },
-    process.env.JWT_SECRET,
-    { expiresIn: "1d" }
-  );
-};
+const TOKEN_PAYLOAD = (user) => ({
+  _id: user._id,
+  email: user.email,
+  roles: user.roles,
+  applicationId: user.applicationId,
+  orgId: user.orgId || null,
+  orgRole: user.orgRole || null,
+});
 
-const verifyToken = (token) => {
-  try {
-    const res = jwt.verify(token, process.env.JWT_SECRET);
-    return res;
-  } catch (err) {
-    console.error("Token verification error:", err?.message);
-    throw err;
-  }
-};
+const createToken = (user) =>
+  jwt.sign(TOKEN_PAYLOAD(user), process.env.JWT_SECRET, { expiresIn: "15m" });
 
-module.exports = {
-  createToken,
-  verifyToken,
-};
+const createRefreshToken = (user) =>
+  jwt.sign({ _id: user._id, applicationId: user.applicationId }, process.env.JWT_SECRET, { expiresIn: "30d" });
+
+const verifyToken = (token) => jwt.verify(token, process.env.JWT_SECRET);
+
+module.exports = { createToken, createRefreshToken, verifyToken };
