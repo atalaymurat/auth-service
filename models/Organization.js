@@ -12,6 +12,23 @@ const memberSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const termSchema = new mongoose.Schema(
+  {
+    key:        { type: String, required: true },
+    label:      { type: String, required: true },
+    fieldType:  { type: String, enum: ['text', 'select', 'multiselect'], default: 'text' },
+    options:    {
+      type: [String],
+      validate: { validator: v => v.length <= 10, message: 'options dizisi en fazla 10 eleman içerebilir.' },
+    },
+    value:      { type: mongoose.Schema.Types.Mixed },
+    isEditable: { type: Boolean, default: true },
+    isVisible:  { type: Boolean, default: true },
+    visibleIn:  { type: [String], enum: ['offer', 'proforma', 'contract'] },
+  },
+  { _id: false }
+);
+
 const organizationSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
@@ -20,12 +37,12 @@ const organizationSchema = new mongoose.Schema(
     applicationId: { type: String, required: true },
     members: [memberSchema],
     createdBy: { type: mongoose.Schema.Types.ObjectId, required: true },
-    logo: String,
     phone: String,
     email: String,
     address: String,
     website: String,
     taxNo: String,
+    offerDefaults: [termSchema],
   },
   { timestamps: true }
 );

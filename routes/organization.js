@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { createOrg, getMyOrg, inviteMember, updateMemberRole, updateOrg } = require("../controllers/organization");
+const { createOrg, getMyOrg, inviteMember, updateMemberRole, updateOrg, updateOfferDefaults } = require("../controllers/organization");
 const { verifyJwt } = require("../middleware/verifyJwt");
 
 router.post("/create", verifyJwt, createOrg);
@@ -8,5 +8,6 @@ router.get("/me", verifyJwt, getMyOrg);
 router.post("/invite", verifyJwt, inviteMember);
 router.patch("/member/:userId/role", verifyJwt, updateMemberRole);
 router.patch("/update", verifyJwt, updateOrg);
+router.patch("/:id/offer-defaults", verifyJwt, updateOfferDefaults);
 
 module.exports = router;

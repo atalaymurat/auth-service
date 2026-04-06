@@ -1,6 +1,7 @@
 const Organization = require("../models/Organization");
 const User = require("../models/User");
 const { createToken } = require("../utils/jwt");
+const offerDefaultsSeed = require("../utils/offerDefaultsSeed");
 
 // POST /api/org/create
 const createOrg = async (req, res) => {
@@ -17,6 +18,7 @@ const createOrg = async (req, res) => {
       applicationId: req.user.applicationId,
       createdBy: userId,
       members: [{ userId, role: "owner" }],
+      offerDefaults: offerDefaultsSeed,
     });
 
     // User'ın orgId ve orgRole'ünü güncelle
@@ -132,4 +134,31 @@ const updateOrg = async (req, res) => {
   }
 };
 
-module.exports = { createOrg, getMyOrg, inviteMember, updateMemberRole, updateOrg };
+// PATCH /api/org/:id/offer-defaults
+const updateOfferDefaults = async (req, res) => {
+  try {
+    const { offerDefaults } = req.body;
+    if (!Array.isArray(offerDefaults)) {
+      return res.status(400).json({ message: "offerDefaults bir dizi olmalıdır." });
+    }
+
+    for (const term of offerDefaults) {
+      if (Array.isArray(term.options) && term.options.length > 10) {
+        return res.status(400).json({ message: `'${term.key}' için options dizisi en fazla 10 eleman içerebilir.` });
+      }
+    }
+
+    const org = await Organization.findByIdAndUpdate(
+      req.params.id,
+      { offerDefaults },
+      { new: true, runValidators: true }
+    );
+    if (!org) return res.status(404).json({ message: "Organizasyon bulunamadı." });
+
+    res.json({ message: "Güncellendi.", org });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+module.exports = { createOrg, getMyOrg, inviteMember, updateMemberRole, updateOrg, updateOfferDefaults };
