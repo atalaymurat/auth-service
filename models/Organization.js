@@ -29,6 +29,18 @@ const termSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const bankAccountSchema = new mongoose.Schema(
+  {
+    bankName:      { type: String, required: true },
+    currency:      { type: String, enum: ["TRY", "USD", "EUR"], required: true },
+    iban:          { type: String, required: true },
+    swiftCode:     String,
+    accountHolder: String,
+    isActive:      { type: Boolean, default: true },
+  },
+  { _id: false }
+);
+
 const organizationSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
@@ -43,6 +55,7 @@ const organizationSchema = new mongoose.Schema(
     website: String,
     taxNo: String,
     offerDefaults: [termSchema],
+    bankAccounts:  [bankAccountSchema],
   },
   { timestamps: true }
 );

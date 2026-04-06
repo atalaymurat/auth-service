@@ -161,4 +161,25 @@ const updateOfferDefaults = async (req, res) => {
   }
 };
 
-module.exports = { createOrg, getMyOrg, inviteMember, updateMemberRole, updateOrg, updateOfferDefaults };
+// PATCH /api/org/:id/bank-accounts
+const updateBankAccounts = async (req, res) => {
+  try {
+    const { bankAccounts } = req.body;
+    if (!Array.isArray(bankAccounts)) {
+      return res.status(400).json({ message: "bankAccounts bir dizi olmalıdır." });
+    }
+
+    const org = await Organization.findByIdAndUpdate(
+      req.params.id,
+      { bankAccounts },
+      { new: true, runValidators: true }
+    );
+    if (!org) return res.status(404).json({ message: "Organizasyon bulunamadı." });
+
+    res.json({ message: "Güncellendi.", org });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+module.exports = { createOrg, getMyOrg, inviteMember, updateMemberRole, updateOrg, updateOfferDefaults, updateBankAccounts };
