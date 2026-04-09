@@ -25,6 +25,7 @@ const userSchema = new mongoose.Schema(
       receiveNewsletter: { type: Boolean, default: false },
     },
     applicationId: { type: String, required: true }, // Kullanici hangi uygulamadan geliyor
+    sampleDataCreated: { type: Boolean, default: false },
     lastLoginAt: {
       // Can be updated using 'auth_time' or 'iat' from token
       type: Date,
