@@ -56,27 +56,29 @@ const login = async (req, res) => {
         user.orgRole = updated.orgRole;
         logger.info({ message: "Org created", orgId: org._id, userId: user._id });
 
-        // Yeni org için backend'de örnek veri oluştur (hata olursa sessizce geç)
-        try {
-          const backendUrl = process.env.BACKEND_INTERNAL_URL || "http://localhost:3021";
-          const sampleRes = await fetch(`${backendUrl}/api/sample-data/init`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "x-service-token": process.env.INTERNAL_SERVICE_TOKEN || "",
-            },
-            body: JSON.stringify({ organizationId: org._id.toString(), userId: user._id.toString() }),
-          });
-          if (sampleRes.ok) {
-            await User.findByIdAndUpdate(user._id, { sampleDataCreated: true });
-            logger.info({ message: "Sample data created", orgId: org._id });
-          } else {
-            const body = await sampleRes.text();
-            logger.warn({ message: "Sample data init failed", status: sampleRes.status, body });
+        // Yeni org için backend'de örnek veri oluştur — login'i bloke etme
+        setImmediate(async () => {
+          try {
+            const backendUrl = process.env.BACKEND_INTERNAL_URL || "http://localhost:3021";
+            const sampleRes = await fetch(`${backendUrl}/api/sample-data/init`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "x-service-token": process.env.INTERNAL_SERVICE_TOKEN || "",
+              },
+              body: JSON.stringify({ organizationId: org._id.toString(), userId: user._id.toString() }),
+            });
+            if (sampleRes.ok) {
+              await User.findByIdAndUpdate(user._id, { sampleDataCreated: true });
+              logger.info({ message: "Sample data created", orgId: org._id });
+            } else {
+              const body = await sampleRes.text();
+              logger.warn({ message: "Sample data init failed", status: sampleRes.status, body });
+            }
+          } catch (sampleErr) {
+            logger.warn({ message: "Sample data creation failed", error: sampleErr.message });
           }
-        } catch (sampleErr) {
-          logger.warn({ message: "Sample data creation failed", error: sampleErr.message });
-        }
+        });
       } catch (orgErr) {
         logger.error({ message: "Org creation failed", error: orgErr.message });
         return res.status(500).json({ error: "Organizasyon oluşturulamadı. Lütfen tekrar deneyin." });
