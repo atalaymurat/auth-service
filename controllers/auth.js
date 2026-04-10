@@ -3,6 +3,7 @@ const { createToken, createRefreshToken, verifyToken } = require("../utils/jwt")
 const User = require("../models/User");
 const Organization = require("../models/Organization");
 const logger = require('../utils/logger');
+const offerDefaultsSeed = require("../utils/offerDefaultsSeed");
 
 const login = async (req, res) => {
   try {
@@ -29,7 +30,7 @@ const login = async (req, res) => {
     };
 
     const { user, isNew } = await User.findOrCreate(userData);
-    logger.info("User found or created:", user);
+    logger.info({ message: "User login", email: user.email, isNew });
 
     // Org yoksa oluştur (yeni kullanıcı veya daha önce org oluşturulamadıysa)
     if (!user.orgId) {
@@ -43,6 +44,7 @@ const login = async (req, res) => {
           applicationId: user.applicationId,
           createdBy: user._id,
           members: [{ userId: user._id, role: "owner" }],
+          offerDefaults: offerDefaultsSeed,
         });
 
         const updated = await User.findByIdAndUpdate(
@@ -52,7 +54,7 @@ const login = async (req, res) => {
         );
         user.orgId = updated.orgId;
         user.orgRole = updated.orgRole;
-        logger.info(`Organization created for user ${user._id}:`, org._id);
+        logger.info({ message: "Org created", orgId: org._id, userId: user._id });
 
         // Yeni org için backend'de örnek veri oluştur (hata olursa sessizce geç)
         try {
@@ -67,16 +69,16 @@ const login = async (req, res) => {
           });
           if (sampleRes.ok) {
             await User.findByIdAndUpdate(user._id, { sampleDataCreated: true });
-            logger.info("Sample data created for org:", org._id);
+            logger.info({ message: "Sample data created", orgId: org._id });
           } else {
             const body = await sampleRes.text();
-            logger.warn("Sample data init failed:", sampleRes.status, body);
+            logger.warn({ message: "Sample data init failed", status: sampleRes.status, body });
           }
         } catch (sampleErr) {
-          logger.warn("Sample data creation failed (non-critical):", sampleErr.message);
+          logger.warn({ message: "Sample data creation failed", error: sampleErr.message });
         }
       } catch (orgErr) {
-        logger.error("Organization creation failed:", orgErr.message);
+        logger.error({ message: "Org creation failed", error: orgErr.message });
         return res.status(500).json({ error: "Organizasyon oluşturulamadı. Lütfen tekrar deneyin." });
       }
     }
@@ -100,7 +102,7 @@ const login = async (req, res) => {
       user,
     });
   } catch (error) {
-    console.error("Login error:", error);
+    logger.error({ message: "Auth error", error: error.message, endpoint: "login" });
     return res.status(401).json({ error: "Login failed" });
   }
 };
@@ -154,7 +156,7 @@ const verify = async (req, res) => {
     }
 
     const decoded = verifyToken(token);
-    logger.info("Decoded token From Verify Auth:", decoded);
+    logger.debug({ message: "Token verified", userId: decoded._id });
 
     const user = await User.findOne({
       _id: decoded._id,
@@ -167,13 +169,13 @@ const verify = async (req, res) => {
 
     return res.status(200).json({ success: true, user });
   } catch (err) {
-    logger.error("Verify error:", err.message);
+    logger.error({ message: "Auth error", error: err.message, endpoint: "verify" });
     return res.status(401).json({ error: "Invalid or expired token" });
   }
 };
 
 const healthCheck = (_req, res) => {
-  logger.info("Health check endpoint hit");
+  logger.debug({ message: "Health check" });
   return res.status(200).json({ status: "ok", service: "auth-service" });
 };
 

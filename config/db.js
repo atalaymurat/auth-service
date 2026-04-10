@@ -1,27 +1,15 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
+const logger = require("../utils/logger");
 
 const connectDB = async () => {
   try {
-    // Set up listeners *before* connecting. Mongoose handles this.
     const db = mongoose.connection;
-    db.on('error', console.error.bind(console, 'MongoDB connection error: '));
-    db.once('open', function () {
-      console.log(`
-    --------------------------------
-    Auth-Service MongoDB connection status [OK]
-    Host: ${db.host}
-    --------------------------------
-          `);
-    });
+    db.on("error", (err) => logger.error({ message: "DB connection error", error: err.message }));
+    db.once("open", () => logger.info({ message: "DB connected", host: db.host }));
 
-    // Attempt connection (returns a promise)
-    // Use mongoose.connect which returns a promise
     await mongoose.connect(process.env.MONGODB_URI);
-    // The 'open' event listener above will handle the success message.
-
   } catch (error) {
-    console.error('Initial MongoDB connection failed:', error.message);
-    // Exit process with failure code if initial connection fails during startup
+    logger.error({ message: "DB connection failed", error: error.message });
     process.exit(1);
   }
 };

@@ -2,6 +2,7 @@ const Organization = require("../models/Organization");
 const User = require("../models/User");
 const { createToken } = require("../utils/jwt");
 const offerDefaultsSeed = require("../utils/offerDefaultsSeed");
+const logger = require("../utils/logger");
 
 // POST /api/org/create
 const createOrg = async (req, res) => {
@@ -28,8 +29,10 @@ const createOrg = async (req, res) => {
     const updatedUser = await User.findById(userId);
     const token = createToken(updatedUser);
 
+    logger.info({ message: "Org created", orgId: org._id, name });
     res.json({ org, token });
   } catch (err) {
+    logger.error({ message: "Org creation failed", error: err.message });
     res.status(500).json({ message: err.message });
   }
 };
@@ -77,8 +80,10 @@ const inviteMember = async (req, res) => {
 
     await User.findByIdAndUpdate(invitedUser._id, { orgId: org._id, orgRole: role });
 
+    logger.info({ message: "Member invited", orgId: org._id, email });
     res.json({ message: "Üye eklendi.", org });
   } catch (err) {
+    logger.error({ message: "Member invite failed", error: err.message });
     res.status(500).json({ message: err.message });
   }
 };
@@ -101,8 +106,10 @@ const updateMemberRole = async (req, res) => {
 
     await User.findByIdAndUpdate(req.params.userId, { orgRole: role });
 
+    logger.info({ message: "Member role updated", userId: req.params.userId, role });
     res.json({ message: "Rol güncellendi.", org });
   } catch (err) {
+    logger.error({ message: "Role update failed", error: err.message });
     res.status(500).json({ message: err.message });
   }
 };

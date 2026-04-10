@@ -1,13 +1,12 @@
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
-const dotenv = require("dotenv");
 const rateLimit = require("express-rate-limit");
 const connectDB = require("./config/db");
 const logger = require('./utils/logger');
 const internalAuth = require("./middleware/internalAuth");
-
-dotenv.config();
 connectDB();
 
 const authRoutes = require("./routes/auth");

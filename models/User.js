@@ -1,5 +1,6 @@
 // models/User.js
 const mongoose = require("mongoose");
+const logger = require("../utils/logger");
 
 const userSchema = new mongoose.Schema(
   {
@@ -62,7 +63,7 @@ userSchema.statics.findOrCreate = async function (userData) {
 
     return { user, isNew: false };
   } catch (error) {
-    console.error("User.findOrCreate error:", error);
+    logger.error({ message: "User.findOrCreate error", error: error.message });
     throw error;
   }
 };
