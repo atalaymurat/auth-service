@@ -59,6 +59,32 @@ const getMyOrg = async (req, res) => {
   }
 };
 
+// GET /api/org/list
+const getOrganizationsList = async (req, res) => {
+  try {
+    if (!req.user.roles?.includes("superadmin")) {
+      return res.status(403).json({ message: "Sadece superadmin erişebilir." });
+    }
+
+    const records = await Organization.find({ applicationId: req.user.applicationId })
+      .sort({ name: 1 })
+      .select("_id name slug members createdAt")
+      .lean();
+
+    const organizations = records.map((org) => ({
+      _id: org._id,
+      name: org.name,
+      slug: org.slug,
+      memberCount: Array.isArray(org.members) ? org.members.length : 0,
+      createdAt: org.createdAt,
+    }));
+
+    res.json({ success: true, organizations });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 // POST /api/org/invite
 const inviteMember = async (req, res) => {
   try {
@@ -189,4 +215,4 @@ const updateBankAccounts = async (req, res) => {
   }
 };
 
-module.exports = { createOrg, getMyOrg, inviteMember, updateMemberRole, updateOrg, updateOfferDefaults, updateBankAccounts };
+module.exports = { createOrg, getMyOrg, getOrganizationsList, inviteMember, updateMemberRole, updateOrg, updateOfferDefaults, updateBankAccounts };

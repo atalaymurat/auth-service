@@ -3,6 +3,7 @@ const router = express.Router();
 const { login, logout, verify, refresh, healthCheck } = require("../controllers/auth");
 const internalAuth = require("../middleware/internalAuth");
 const User = require("../models/User");
+const { verifyToken } = require("../utils/jwt");
 
 // POST /login – Firebase ID token ile giriş ve JWT oluşturma
 router.post("/login", login);
@@ -14,6 +15,34 @@ router.post("/refresh", refresh);
 
 // GET /health – Sağlık kontrolü
 router.get("/health", healthCheck);
+
+// GET /users – Superadmin atama ekranı için tüm kullanıcılar (internal only)
+router.get("/users", internalAuth, async (req, res) => {
+  try {
+    const token = req.headers.authorization?.startsWith("Bearer ")
+      ? req.headers.authorization.split(" ")[1]
+      : null;
+
+    let query = {};
+    if (token) {
+      try {
+        const decoded = verifyToken(token);
+        if (decoded.applicationId) query.applicationId = decoded.applicationId;
+      } catch {
+        query = {};
+      }
+    }
+
+    const users = await User.find(query)
+      .sort({ name: 1, createdAt: -1 })
+      .select("_id name email roles orgId orgRole isActive applicationId")
+      .lean();
+
+    res.json({ success: true, users });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
 
 // GET /users/summary – Superadmin için kullanıcı özeti (internal only)
 router.get("/users/summary", internalAuth, async (req, res) => {
