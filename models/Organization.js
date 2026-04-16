@@ -5,7 +5,7 @@ const memberSchema = new mongoose.Schema(
     userId: { type: mongoose.Schema.Types.ObjectId, required: true },
     role: {
       type: String,
-      enum: ["owner", "admin", "member"],
+      enum: ["owner", "member"],
       default: "member",
     },
   },

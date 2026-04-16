@@ -1,7 +1,8 @@
 const express = require("express");
 const router = express.Router();
-const { login, logout, verify, refresh, healthCheck } = require("../controllers/auth");
+const { login, logout, verify, refresh, healthCheck, switchOrg } = require("../controllers/auth");
 const internalAuth = require("../middleware/internalAuth");
+const { verifyJwt } = require("../middleware/verifyJwt");
 const User = require("../models/User");
 const { verifyToken } = require("../utils/jwt");
 
@@ -15,6 +16,9 @@ router.post("/refresh", refresh);
 
 // GET /health – Sağlık kontrolü
 router.get("/health", healthCheck);
+
+// POST /switch-org – Aktif org'u değiştir, yeni JWT üret
+router.post("/switch-org", verifyJwt, switchOrg);
 
 // GET /users – Superadmin atama ekranı için tüm kullanıcılar (internal only)
 router.get("/users", internalAuth, async (req, res) => {
@@ -35,7 +39,7 @@ router.get("/users", internalAuth, async (req, res) => {
 
     const users = await User.find(query)
       .sort({ name: 1, createdAt: -1 })
-      .select("_id name email roles orgId orgRole isActive applicationId")
+      .select("_id name email roles defaultOrgId isActive applicationId")
       .lean();
 
     res.json({ success: true, users });
