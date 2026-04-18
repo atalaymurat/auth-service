@@ -41,7 +41,9 @@ app.use(express.json());
 app.get("/health", (_req, res) =>
   res.status(200).json({ status: "ok", service: "auth-service" }),
 );
-
+app.get("/api/auth/health", (_req, res) =>
+  res.status(200).json({ status: "ok", service: "auth-service" })
+);
 // Tüm route'lara internal API key kontrolü
 app.use(internalAuth);
 
