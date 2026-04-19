@@ -154,7 +154,9 @@ const login = async (req, res) => {
     res.cookie("accessToken", accessToken, { ...base, maxAge: 15 * 60 * 1000 });
     res.cookie("refreshToken", refreshToken, { ...base, maxAge: 30 * 24 * 60 * 60 * 1000 });
 
-    return res.status(200).json({ success: true, user });
+    const userObj = user.toObject();
+    userObj.orgRole = orgRole;
+    return res.status(200).json({ success: true, user: userObj });
   } catch (error) {
     logger.error({ message: "Auth error", error: error.message, endpoint: "login" });
     return res.status(401).json({ error: "Login failed" });
@@ -219,7 +221,10 @@ const verify = async (req, res) => {
       return res.status(404).json({ error: "User not found or inactive" });
     }
 
-    return res.status(200).json({ success: true, user });
+    const orgRole = await resolveOrgRole(user._id, user.defaultOrgId);
+    const userObj = user.toObject();
+    userObj.orgRole = orgRole;
+    return res.status(200).json({ success: true, user: userObj });
   } catch (err) {
     logger.error({ message: "Auth error", error: err.message, endpoint: "verify" });
     return res.status(401).json({ error: "Invalid or expired token" });
