@@ -20,7 +20,7 @@ const cookieBase = (isProduction) => ({
   httpOnly: true,
   secure: isProduction,
   sameSite: isProduction ? "none" : "lax",
-  domain: isProduction ? ".postiva.uk" : undefined,
+  domain: isProduction ? process.env.COOKIE_DOMAIN || ".postiva.uk" : undefined,
 });
 
 const login = async (req, res) => {

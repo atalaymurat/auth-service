@@ -62,4 +62,22 @@ router.get("/users/summary", internalAuth, async (req, res) => {
   }
 });
 
+// GET /users/:id – Internal service lookup for document metadata
+router.get("/users/:id", internalAuth, async (req, res) => {
+  try {
+    const query = { _id: req.params.id };
+    if (req.query.applicationId) query.applicationId = req.query.applicationId;
+
+    const user = await User.findOne(query)
+      .select("_id name email profilePicture roles defaultOrgId applicationId")
+      .lean();
+
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+    res.json({ success: true, user });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 module.exports = router;
