@@ -15,11 +15,14 @@ const orgRoutes = require("./routes/organization");
 const app = express();
 const PORT = process.env.PORT || 3022;
 
-// CORS: sadece backend'e izin ver
+// CORS: backend ve frontend'e izin ver
 const allowedOrigins = [
   process.env.BACKEND_URL,
+  "https://postiva.uk",
+  "https://app.postiva.uk",
   "http://localhost:3021",
   "http://192.168.1.100:3021",
+  "http://localhost:3020",
 ];
 
 app.use(
