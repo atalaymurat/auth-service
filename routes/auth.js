@@ -103,16 +103,23 @@ router.get("/users/:id", internalAuth, async (req, res) => {
 // PATCH /users/:id/activate – Superadmin: Activate user
 router.patch("/users/:id/activate", internalAuth, async (req, res) => {
   try {
-    const user = await User.findByIdAndUpdate(
+    const user = await User.findById(req.params.id).select("_id name email roles isActive").lean();
+
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+    // Prevent superadmin from being deactivated
+    if (user.roles?.includes("superadmin")) {
+      return res.status(403).json({ success: false, message: "Superadmin cannot be modified" });
+    }
+
+    const updated = await User.findByIdAndUpdate(
       req.params.id,
       { isActive: true },
       { new: true }
     ).select("_id name email isActive").lean();
 
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
-
     logger.info({ message: "User activated", userId: user._id, email: user.email });
-    res.json({ success: true, user });
+    res.json({ success: true, user: updated });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -121,16 +128,23 @@ router.patch("/users/:id/activate", internalAuth, async (req, res) => {
 // PATCH /users/:id/deactivate – Superadmin: Deactivate user
 router.patch("/users/:id/deactivate", internalAuth, async (req, res) => {
   try {
-    const user = await User.findByIdAndUpdate(
+    const user = await User.findById(req.params.id).select("_id name email roles isActive").lean();
+
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+    // Prevent superadmin from being deactivated
+    if (user.roles?.includes("superadmin")) {
+      return res.status(403).json({ success: false, message: "Superadmin cannot be modified" });
+    }
+
+    const updated = await User.findByIdAndUpdate(
       req.params.id,
       { isActive: false },
       { new: true }
     ).select("_id name email isActive").lean();
 
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
-
     logger.info({ message: "User deactivated", userId: user._id, email: user.email });
-    res.json({ success: true, user });
+    res.json({ success: true, user: updated });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -139,11 +153,18 @@ router.patch("/users/:id/deactivate", internalAuth, async (req, res) => {
 // DELETE /users/:id – Superadmin: Delete user
 router.delete("/users/:id", internalAuth, async (req, res) => {
   try {
-    const user = await User.findByIdAndDelete(req.params.id).select("_id name email").lean();
+    const user = await User.findById(req.params.id).select("_id name email roles").lean();
 
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
-    logger.info({ message: "User deleted", userId: user._id, email: user.email });
+    // Prevent superadmin from being deleted
+    if (user.roles?.includes("superadmin")) {
+      return res.status(403).json({ success: false, message: "Superadmin cannot be deleted" });
+    }
+
+    const deleted = await User.findByIdAndDelete(req.params.id).select("_id name email").lean();
+
+    logger.info({ message: "User deleted", userId: deleted._id, email: deleted.email });
     res.json({ success: true, message: "User deleted successfully" });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
