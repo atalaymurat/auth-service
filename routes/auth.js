@@ -37,12 +37,21 @@ router.get("/users", internalAuth, async (req, res) => {
       }
     }
 
-    const users = await User.find(query)
-      .sort({ name: 1, createdAt: -1 })
-      .select("_id name email roles defaultOrgId isActive applicationId")
-      .lean();
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
-    res.json({ success: true, users });
+    const [users, total] = await Promise.all([
+      User.find(query)
+        .sort({ name: 1, createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .select("_id name email roles defaultOrgId isActive applicationId")
+        .lean(),
+      User.countDocuments(query),
+    ]);
+
+    res.json({ success: true, users, total });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
