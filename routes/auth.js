@@ -6,6 +6,7 @@ const { verifyJwt } = require("../middleware/verifyJwt");
 const User = require("../models/User");
 const Organization = require("../models/Organization");
 const { verifyToken } = require("../utils/jwt");
+const logger = require("../utils/logger");
 
 // POST /login – Firebase ID token ile giriş ve JWT oluşturma
 router.post("/login", login);
