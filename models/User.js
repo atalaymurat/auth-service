@@ -18,7 +18,7 @@ const userSchema = new mongoose.Schema(
     defaultOrgId: { type: mongoose.Schema.Types.ObjectId, ref: "Organization" },
     isActive: {
       type: Boolean,
-      default: true,
+      default: false,
     },
     preferences: {
       theme: { type: String, default: "light" },

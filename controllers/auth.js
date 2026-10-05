@@ -46,7 +46,11 @@ const login = async (req, res) => {
     };
 
     const { user, isNew } = await User.findOrCreate(userData);
-    logger.info({ message: "User login", email: user.email, isNew });
+    logger.info({ message: "User login", email: user.email, isNew, isActive: user.isActive });
+
+    if (!user.isActive) {
+      return res.status(403).json({ error: "Hesabınız admin tarafından henüz aktifleştirilmedi. Lütfen yöneticinizle iletişime geçin." });
+    }
 
     // 1. Fallback: Mongoose şemasında olmayan eski orgId alanını native driver ile oku
     if (!user.defaultOrgId) {
