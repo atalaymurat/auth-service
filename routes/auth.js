@@ -163,6 +163,21 @@ router.delete("/users/:id", internalAuth, async (req, res) => {
       return res.status(403).json({ success: false, message: "Superadmin cannot be deleted" });
     }
 
+    // Cleanup user content from backend
+    const backendUrl = process.env.BACKEND_INTERNAL_URL || "http://localhost:3021";
+    try {
+      await fetch(`${backendUrl}/api/content/cleanup/${user._id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "x-service-token": process.env.INTERNAL_SERVICE_TOKEN || "",
+        },
+      });
+      logger.info({ message: "User content cleanup requested", userId: user._id });
+    } catch (cleanupErr) {
+      logger.warn({ message: "User content cleanup failed", userId: user._id, error: cleanupErr.message });
+    }
+
     const deleted = await User.findByIdAndDelete(req.params.id).select("_id name email").lean();
 
     logger.info({ message: "User deleted", userId: deleted._id, email: deleted.email });
